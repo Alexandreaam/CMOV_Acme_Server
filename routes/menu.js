@@ -8,8 +8,16 @@ router.get('/', function(req, res, next) {
     if (err) {
       return next(err)
     } else if (rep != null) {
-      console.log(rep)
-      res.send(rep.rows)
+      var r = {}
+      var key = 'Products'
+      r[key] = []
+      rep.rows.forEach(element => {
+        console.log(element)
+        r[key].push(element)
+      });
+      console.log(r)
+
+      res.send(r)
     }
     else {
       res.send(JSON.parse('{"usernameTaken":"True"}'))

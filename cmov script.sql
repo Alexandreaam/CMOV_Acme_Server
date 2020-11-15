@@ -1,13 +1,13 @@
 create table users
 (
+    userid          serial not null PRIMARY KEY,
     username        varchar(255),
     password        varchar(255),
     fullname        varchar(255),
     creditcard      integer,
     nif             integer,
     coffeecount     integer,
-    totalspendings  double precision,
-    userid          serial not null PRIMARY KEY
+    totalspendings  double precision
 );
 
 create unique index table_name_id_uindex
@@ -21,6 +21,7 @@ VALUES ('admin', 'admin' , 'admin', '123', '123', '0', '0');
 
 create table products
 (
+    productid   serial not null PRIMARY KEY,
     title   	varchar(255),
     details 	varchar(255),
     price 	    double precision,
@@ -29,11 +30,11 @@ create table products
 
 create table vouchers
 (
+    vouchid     serial not null PRIMARY KEY,
+    userid	    int REFERENCES users(userid),
     title   	varchar(255),
     details	    varchar(255),
-    userid	    int REFERENCES users(userid),
-    image 	    varchar(255),
-    vouchid     serial not null PRIMARY KEY
+    image 	    varchar(255)
 );
 
 INSERT INTO products (title, details, price, image)

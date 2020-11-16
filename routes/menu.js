@@ -14,7 +14,18 @@ router.get('/', function(req, res, next) {
             rep.rows.forEach(element => {
                 r[key].push(element)
             });
-            res.send(r)
+            db.query('SELECT * from vouchers where userid = 1;', (err2, rep2) => {
+                if (err2) {
+                    return next(err2)
+                } else if (rep2 != null) {
+                    var key = 'Vouchers'
+                    r[key] = []
+                    rep2.rows.forEach(element => {
+                        r[key].push(element)
+                    });
+                    res.send(r)
+                }
+            })
         } else {
             res.send(JSON.parse('{"usernameTaken":"True"}'))
         }

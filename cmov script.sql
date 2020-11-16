@@ -40,7 +40,7 @@ create table vouchers
 INSERT INTO products (title, details, price, image)
 VALUES ('Panini', 'Hot pressed bread.' , '1.00', 'images/Panini.webp');
 INSERT INTO products (title, details, price, image)
-VALUES ('Ham&Cheese sandwich', 'Hot pressed sliced bread with ham and cheese.' , '1.00', 'images/HamCheese.webp');
+VALUES ('Ham&Cheese toast', 'Hot pressed sliced bread with ham and cheese.' , '1.00', 'images/HamCheese.webp');
 INSERT INTO products (title, details, price, image)
 VALUES ('Croissant', 'Simple croissant.' , '1.20', 'images/Croissant.webp');
 INSERT INTO products (title, details, price, image)

@@ -35,14 +35,15 @@ create table vouchers
     title   	varchar(255),
     details	    varchar(255),
     image 	    varchar(255),
+    type        bytea,
     quantity    int
 );
 
-INSERT INTO vouchers (userid, title, details, image, quantity)
-VALUES ('1', 'Free Coffee.' , 'Get a free coffee for every 3 coffees you buy!', 'images/Coffee.webp', 0);
+INSERT INTO vouchers (userid, title, details, image, type, quantity)
+VALUES ('1', 'Free Coffee' , 'Get a free coffee for every 3 coffees you buy!', 'images/Coffee.webp', '00000001', 3);
 
-INSERT INTO vouchers (userid, title, details, image, quantity)
-VALUES ('1', '5% Discount.' , 'Every 100€ you spend gets you a 5% discount!', 'images/Coffee.webp', 0);
+INSERT INTO vouchers (userid, title, details, image, type, quantity)
+VALUES ('1', '5% Discount' , 'Every 100€ you spend gets you a 5% discount!', 'images/Coffee.webp', '00000010', 1);
 
 INSERT INTO products (title, details, price, image)
 VALUES ('Panini', 'Hot pressed bread.' , '1.00', 'images/Panini.webp');

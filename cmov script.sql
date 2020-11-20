@@ -19,6 +19,10 @@ create unique index table_name_username_uindex
 INSERT INTO users (username, password, fullname, creditcard, nif, coffeecount, totalspendings)
 VALUES ('admin', 'admin' , 'admin', '123', '123', '0', '0');
 
+UPDATE users
+SET coffeecount = 5, totalspendings = 4.20
+WHERE userid = 1;
+
 create table products
 (
     productid   serial not null PRIMARY KEY,
@@ -38,6 +42,19 @@ create table vouchers
     type        bytea,
     quantity    int
 );
+
+create table orders
+(
+    orderid     serial not null PRIMARY KEY,
+    userid	    int REFERENCES users(userid),
+    products   	jsonb,
+    vouchers	jsonb,
+    date 	    date,
+    total       double precision
+);
+
+INSERT INTO orders (userid, products, vouchers, date, total)
+VALUES ('1', '{"1":1,"2":3,"3":2}', '{"1":2,"2":1}', '2019-11-12', '2.7');
 
 INSERT INTO vouchers (userid, title, details, image, type, quantity)
 VALUES ('1', 'Free Coffee' , 'Get a free coffee for every 3 coffees you buy!', 'images/Coffee.webp', '00000001', 3);

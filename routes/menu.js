@@ -14,7 +14,7 @@ router.post('/', function(req, res, next) {
             rep.rows.forEach(element => {
                 r[key].push(element)
             });
-            db.query('SELECT * from vouchers where userid = $1;', [req.body.userid], (err2, rep2) => {
+            db.query('SELECT * from vouchers where userid = $1 AND used = false;', [req.body.userid], (err2, rep2) => {
                 if (err2) {
                     return next(err2)
                 } else if (rep2 != null) {

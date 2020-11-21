@@ -34,7 +34,9 @@ router.post('/', function(req, res, next) {
                     }
 
                     var discountedCoffees = 0
+                    var appliedCoffeeVouchers = []
                     var discountPercent = 0
+                    var appliedPercentVouchers = []
 
                     var vouchs = JSON.parse(req.body.Vouchers)
                     for (var vouch in vouchs) {
@@ -42,12 +44,15 @@ router.post('/', function(req, res, next) {
                             //TODO Check if vouch exists and is of correct type
                             if(vouchs[vouch] == true){
                                 discountedCoffees++
+                                appliedCoffeeVouchers.push(vouch)
                             } else{
                                 discountPercent++
+                                appliedPercentVouchers.push(vouch)
                             }
                         }
                     }
-
+                    
+                    var excess = 0
                     if(newCoffee < discountedCoffees){
                         excess = discountedCoffees - newCoffee
                         newCoffee = 0
@@ -60,8 +65,30 @@ router.post('/', function(req, res, next) {
                         console.log("All coffees were discounted!")
                     }
 
-                    if(discountPercent > 1){
-                        console.log("More than one 5% discount used, ignoring excess")
+
+                    for ( var i = 0 ; i < (discountedCoffees - excess) ; i++){
+                        db.query('UPDATE vouchers SET used = true WHERE vouchid = $1;', [appliedCoffeeVouchers[i]], (err3, rep3) => {
+                            if (err3) {
+                                console.log(err3)
+                                return next(err3)
+                            } else {
+
+                            }
+                        })
+                    }
+                    
+
+                    if(discountPercent > 0){
+                        if(discountPercent > 1)
+                            console.log("More than one 5% discount used, ignoring excess")
+                        db.query('UPDATE vouchers SET used = true WHERE vouchid = $1;', [appliedPercentVouchers[0]], (err3, rep3) => {
+                            if (err3) {
+                                console.log(err3)
+                                return next(err3)
+                            } else {
+
+                            }
+                        })
                     }
 
                     var newTempSpending = rep2.rows[0].tempspendings + req.body.Total

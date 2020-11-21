@@ -43,7 +43,8 @@ router.post('/', function(req, res, next) {
                             console.log(err3)
                             return next(err3)
                         } else {
-                            res.send(JSON.parse('{"Order":"Success"}'))
+                            //TODO Vouchers must be the ones used and total must reflect that 
+                            res.send(JSON.parse('{"Order":"Success","Vouchers":"'+ req.body.Vouchers +'","Total":'+ req.body.Total +'}'))
 
                         }
                     })

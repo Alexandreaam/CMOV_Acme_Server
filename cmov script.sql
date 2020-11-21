@@ -1,6 +1,6 @@
 create table users
 (
-    userid          serial not null PRIMARY KEY,
+    userid          uuid not null PRIMARY KEY,
     username        varchar(255),
     password        varchar(255),
     fullname        varchar(255),
@@ -16,12 +16,12 @@ create unique index table_name_id_uindex
 create unique index table_name_username_uindex
     on users (username);
 
-INSERT INTO users (username, password, fullname, creditcard, nif, coffeecount, totalspendings)
-VALUES ('admin', 'admin' , 'admin', '123', '123', '0', '0');
+INSERT INTO users (userid, username, password, fullname, creditcard, nif, coffeecount, totalspendings)
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', 'admin', 'admin' , 'admin', '123', '123', '0', '0');
 
 UPDATE users
 SET coffeecount = 5, totalspendings = 4.20
-WHERE userid = 1;
+WHERE userid = '82338de6-ba66-43d0-81f0-5205529b8c23';
 
 create table products
 (
@@ -34,33 +34,41 @@ create table products
 
 create table vouchers
 (
-    vouchid     serial not null PRIMARY KEY,
-    userid	    int REFERENCES users(userid),
+    vouchid     uuid not null PRIMARY KEY,
+    userid	    uuid REFERENCES users(userid),
     title   	varchar(255),
     details	    varchar(255),
     image 	    varchar(255),
-    type        bytea,
-    quantity    int
+    type        boolean
 );
 
 create table orders
 (
     orderid     serial not null PRIMARY KEY,
-    userid	    int REFERENCES users(userid),
+    userid	    uuid REFERENCES users(userid),
     products   	jsonb,
-    vouchers	jsonb,
+    vouchers	uuid [],
     date 	    date,
     total       double precision
 );
 
 INSERT INTO orders (userid, products, vouchers, date, total)
-VALUES ('1', '{"1":1,"2":3,"3":2}', '{"1":2,"2":1}', '2019-11-12', '2.7');
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{9bcc7836-3d47-4c05-8a83-cf4f79015deb, cfb78476-dd06-4fe3-8227-e5b6fcc5df25}', '2019-11-12', '2.7');
 
-INSERT INTO vouchers (userid, title, details, image, type, quantity)
-VALUES ('1', 'Free Coffee' , 'Get a free coffee for every 3 coffees you buy!', 'images/Coffee.webp', '00000001', 3);
+INSERT INTO vouchers (vouchid, userid, title, details, image, type)
+VALUES ('9bcc7836-3d47-4c05-8a83-cf4f79015deb', '82338de6-ba66-43d0-81f0-5205529b8c23', 'Free Coffee' , 'Get a free coffee for every 3 coffees you buy!', 'images/Coffee.webp', true);
 
-INSERT INTO vouchers (userid, title, details, image, type, quantity)
-VALUES ('1', '5% Discount' , 'Every 100€ you spend gets you a 5% discount!', 'images/Coffee.webp', '00000010', 1);
+INSERT INTO vouchers (vouchid, userid, title, details, image, type)
+VALUES ('cfb78476-dd06-4fe3-8227-e5b6fcc5df25', '82338de6-ba66-43d0-81f0-5205529b8c23', 'Free Coffee' , 'Get a free coffee for every 3 coffees you buy!', 'images/Coffee.webp', true);
+
+INSERT INTO vouchers (vouchid, userid, title, details, image, type)
+VALUES ('0497155f-2482-4c8b-9d82-ce51e43e1774', '82338de6-ba66-43d0-81f0-5205529b8c23', 'Free Coffee' , 'Get a free coffee for every 3 coffees you buy!', 'images/Coffee.webp', true);
+
+INSERT INTO vouchers (vouchid, userid, title, details, image, type)
+VALUES ('c1eb87ee-ee52-45ee-80eb-5bd5a6768416', '82338de6-ba66-43d0-81f0-5205529b8c23', '5% Discount' , 'Every 100€ you spend gets you a 5% discount!', 'images/Coffee.webp', false);
+
+INSERT INTO vouchers (vouchid, userid, title, details, image, type)
+VALUES ('1c44e982-9f6d-439c-9673-d88d0703b25c', '82338de6-ba66-43d0-81f0-5205529b8c23', '5% Discount' , 'Every 100€ you spend gets you a 5% discount!', 'images/Coffee.webp', false);
 
 INSERT INTO products (title, details, price, image)
 VALUES ('Panini', 'Hot pressed bread.' , '1.00', 'images/Panini.webp');

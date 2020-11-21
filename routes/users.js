@@ -24,7 +24,7 @@ router.post('/', function(req, res, next) {
         if (err) {
             return next(err)
         } else if (rep.rows[0] == undefined) {
-            db.query('INSERT INTO users (username, password, fullname, creditcard, nif) VALUES ( $1, $2, $3, $4, $5);', [req.body.username, req.body.password, req.body.fullname, req.body.creditcard, req.body.nif], (err2, rep) => {
+            db.query('INSERT INTO users (userid, username, password, fullname, creditcard, nif) VALUES ( $1, $2, $3, $4, $5, $6);', [req.body.userid, req.body.username, req.body.password, req.body.fullname, req.body.creditcard, req.body.nif], (err2, rep) => {
                 if (err2) {
                     console.log(err2.message)
                     return next(err2)
@@ -34,7 +34,7 @@ router.post('/', function(req, res, next) {
                             console.log(err3.message)
                             return next(err3)
                         } else {
-                            res.send(JSON.parse('{"username":"' + req.body.username + '","userid":' + rep3.rows[0].userid + '}'))
+                            res.send(JSON.parse('{"username":"' + req.body.username + '","userid":"' + rep3.rows[0].userid + '"}'))
                         }
                     })
                 }
@@ -52,7 +52,7 @@ router.post('/login', function(req, res, next) {
             return next(err)
         } else if (rep.rows[0] != undefined) {
             if (req.body.password == rep.rows[0].password) {
-                res.send(JSON.parse('{"result":"Confirmed","userid":' + rep.rows[0].userid + '}'))
+                res.send(JSON.parse('{"result":"Confirmed","userid":"' + rep.rows[0].userid + '"}'))
             } else if (req.body.password != rep.rows[0].password) {
                 res.send(JSON.parse('{"result":"Wrong"}'))
             }

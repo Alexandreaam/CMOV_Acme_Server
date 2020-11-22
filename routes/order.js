@@ -18,7 +18,7 @@ router.post('/', function(req, res, next) {
 
             db.query('SELECT coffeecount, totalspendings, tempcoffeecount, tempspendings from users where userid = $1;', [req.body.userid], (err2, rep2) => {
                 if (err2) {
-                    console.log(err)
+                    console.log(err2)
                     return next(err2)
                 } else {
                     db.query('SELECT productid, title FROM products;', (err, prodData) => {
@@ -60,6 +60,38 @@ router.post('/', function(req, res, next) {
                                     }
                                 }
                             }
+
+                            var usedVouchers = []
+                            //Check Validity
+                            for (var i = 0; i < discountedCoffees; i++) {
+                                db.query('SELECT used FROM vouchers WHERE vouchid = $1;', [appliedCoffeeVouchers[i]], (err3, rep3) => {
+                                    if (err3) {
+                                        console.log(err3)
+                                        return next(err3)
+                                    } else {
+                                        if(rep3.rows[0].used == true){
+                                            usedVouchers.push(appliedCoffeeVouchers[i])
+                                            console.log("Voucher " + appliedCoffeeVouchers[i] + " has already been used")
+                                        }
+                                    }
+                                })
+                            }
+
+                            for (var i = 0; i < discountPercent; i++) {
+                                db.query('SELECT used FROM vouchers WHERE vouchid = $1;', [appliedPercentVouchers[i]], (err3, rep3) => {
+                                    if (err3) {
+                                        console.log(err3)
+                                        return next(err3)
+                                    } else {
+                                        if(rep3.rows[0].used == true){
+                                            usedVouchers.push(appliedPercentVouchers[i])
+                                            console.log("Voucher " + appliedPercentVouchers[i]+ " has already been used")
+                                        }
+                                    }
+                                })
+                            }
+
+                            console.log(usedVouchers)
 
                             var excess = 0
                             if (newCoffee < discountedCoffees) {

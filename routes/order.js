@@ -178,7 +178,7 @@ router.post('/', function(req, res, next) {
                                     return next(err3)
                                 } else {
                                     //TODO Vouchers must be the ones used and total must reflect that 
-                                    res.send(JSON.parse('{"Order":"Success","Orderid":'+ req.rows[0] +',"Vouchers":'+ req.body.Vouchers +',"Total":'+ req.body.Total +',"terminalProducts":"'+terminalProducts.toString()+'","terminalVouchers":"'+terminalVouchers.toString()+'","terminalPrice":"'+terminalPrice.toString()+'","terminalEarned":"'+terminalEarned.toString()+'"}'))
+                                    res.send(JSON.parse('{"Order":"Success","Orderid":'+ rep.rows[0].orderid +',"Vouchers":'+ req.body.Vouchers +',"Total":'+ req.body.Total +',"terminalProducts":"'+terminalProducts.toString()+'","terminalVouchers":"'+terminalVouchers.toString()+'","terminalPrice":"'+terminalPrice.toString()+'","terminalEarned":"'+terminalEarned.toString()+'"}'))
         
                                 }
                             })

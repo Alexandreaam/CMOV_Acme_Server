@@ -1,6 +1,8 @@
 const express = require('express');
 const db = require('../db')
 const router = express.Router();
+const forge = require('node-forge')
+
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -40,21 +42,30 @@ router.post('/', function(req, res, next) {
         if (err) {
             return next(err)
         } else if (rep.rows[0] == undefined) {
-            db.query('INSERT INTO users (userid, username, password, fullname, creditcard, nif) VALUES ( $1, $2, $3, $4, $5, $6);', [req.body.userid, req.body.username, req.body.password, req.body.fullname, req.body.creditcard, req.body.nif], (err2, rep) => {
+
+            var userUUID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+
+            db.query('INSERT INTO users (userid, username, password, fullname, creditcard, nif) VALUES ( $1, $2, $3, $4, $5, $6);', [userUUID, req.body.username, req.body.password, req.body.fullname, req.body.creditcard, req.body.nif], (err2, rep) => {
                 if (err2) {
                     console.log(err2.message)
                     return next(err2)
                 } else {
-                    db.query('SELECT userid from users WHERE username=$1;', [req.body.username], (err3, rep3) => {
-                        if (err3) {
-                            console.log(err3.message)
-                            return next(err3)
+                    db.query('INSERT INTO certificates (userid, certificate) VALUES ($1, $2);', 
+                    [userUUID, req.body.payload], (err, rep) => {
+                        if (err) {
+                            console.log(err)
+                            return next(err)
                         } else {
-                            res.send(JSON.parse('{"username":"' + req.body.username + '","userid":"' + rep3.rows[0].userid + '"}'))
+                            res.send(JSON.parse('{"username":"' + req.body.username + '","userid":"' + userUUID + '"}'))
                         }
                     })
                 }
             })
+            
         } else {
             res.send(JSON.parse('{"usernameTaken":"True"}'))
         }
@@ -78,22 +89,30 @@ router.post('/login', function(req, res, next) {
     })
 })
 
-/*
 router.post('/cert', function(req, res, next) {
+    console.log(req.body.payload)
+    try{
+        let certificate = forge.pki.certificateFromPem(req.body.payload)
 
-  X509Certificate2 c = new X509Certificate2(Encoding.ASCII.GetBytes(req));
-  CertData data = new CertData();
+        var userUUID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+        console.log(certificate)
+        db.query('INSERT INTO certificates (userid, certificate) VALUES ($1, $2);', 
+        [userUUID, req.body.payload], (err, rep) => {
+            if (err) {
+                console.log(err)
+                return next(err)
+            } else {
+                res.send(JSON.parse('{"result":"result"}'))
+            }
+        })
 
-  data.subject = c.Subject;
-  data.issuer = c.Issuer;
-  data.version = c.Version.ToString();
-  data.sdate = c.NotBefore.ToString();
-  data.edate = c.NotAfter.ToString();
-  data.thumb = c.Thumbprint;
-  data.serial = c.SerialNumber;
-  data.friendly = c.PublicKey.Oid.FriendlyName;
-  data.pkencoding = c.PublicKey.EncodedKeyValue.Format(true);
-
+    } catch (e) {
+        console.log(e)
+    }
 })
-*/
+
 module.exports = router;

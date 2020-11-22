@@ -55,6 +55,12 @@ create table orders
     total       double precision
 );
 
+create table certificates
+(
+    userid      uuid REFERENCES users(userid),
+    certificate varchar(500)
+);
+
 INSERT INTO orders (userid, products, vouchers, date, total)
 VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{"9bcc7836-3d47-4c05-8a83-cf4f79015deb":true, "43e4a887-9399-42be-9198-3154be564f14":false}', '2019-11-12', '2.7');
 

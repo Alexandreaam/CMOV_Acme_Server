@@ -2,6 +2,17 @@ var express = require('express');
 const db = require('../db')
 var router = express.Router();
 
+router.post('/delete', function(req, res, next) {
+
+    db.query('DELETE FROM orders WHERE orderid = $1;', [req.body.orderid],  (err, prodData) => {
+        if (err) {
+            console.log(err)
+            return next(err)
+        } else
+            res.send(JSON.parse('{"Deletion":"Success"}'))
+    })
+})
+
 router.post('/', function(req, res, next) {
     var datetime = new Date();
     var date = datetime.getFullYear() + '-' + (datetime.getMonth() + 1) + '-' + datetime.getDate()
@@ -9,8 +20,9 @@ router.post('/', function(req, res, next) {
     var terminalVouchers = ""
     var terminalPrice = ""
     var terminalEarned = ""
+    var totalCalculated = req.body.Total
 
-    db.query("INSERT INTO orders (userid, products, vouchers, date, total) VALUES ( $1, $2, $3, $4, $5) RETURNING orderid;", [req.body.userid, req.body.Products, req.body.Vouchers, date, req.body.Total], (err, rep) => {
+    db.query("INSERT INTO orders (userid, products, vouchers, date, total) VALUES ( $1, $2, $3, $4, $5) RETURNING orderid;", [req.body.userid, req.body.Products, req.body.Vouchers, date, req.body.TotalDiscounted], (err, rep) => {
         if (err) {
             console.log(err)
             return next(err)
@@ -46,177 +58,180 @@ router.post('/', function(req, res, next) {
                             var appliedCoffeeVouchers = []
                             var discountPercent = 0
                             var appliedPercentVouchers = []
+                            var vouchers = []
 
                             var vouchs = JSON.parse(req.body.Vouchers)
                             for (var vouch in vouchs) {
                                 if (vouchs.hasOwnProperty(vouch)) {
                                     //TODO Check if vouch exists and is of correct type
-                                    if (vouchs[vouch] == true) {
-                                        discountedCoffees++
-                                        appliedCoffeeVouchers.push(vouch)
-                                    } else {
-                                        discountPercent++
-                                        appliedPercentVouchers.push(vouch)
-                                    }
+                                        vouchers.push(vouch)
                                 }
                             }
 
-                            var usedVouchers = []
-                            //Check Validity
-                            for (var i = 0; i < discountedCoffees; i++) {
-                                db.query('SELECT used FROM vouchers WHERE vouchid = $1;', [appliedCoffeeVouchers[i]], (err3, rep3) => {
-                                    if (err3) {
-                                        console.log(err3)
-                                        return next(err3)
-                                    } else {
-                                        if(rep3.rows[0].used == true){
-                                            usedVouchers.push(appliedCoffeeVouchers[i])
-                                            console.log("Voucher " + appliedCoffeeVouchers[i] + " has already been used")
-                                        }
-                                    }
-                                })
-                            }
+                            var usableCoffeeVouchers = []
+                            var usableDiscountVouchers = []
 
-                            for (var i = 0; i < discountPercent; i++) {
-                                db.query('SELECT used FROM vouchers WHERE vouchid = $1;', [appliedPercentVouchers[i]], (err3, rep3) => {
-                                    if (err3) {
-                                        console.log(err3)
-                                        return next(err3)
-                                    } else {
-                                        if(rep3.rows[0].used == true){
-                                            usedVouchers.push(appliedPercentVouchers[i])
-                                            console.log("Voucher " + appliedPercentVouchers[i]+ " has already been used")
-                                        }
-                                    }
-                                })
-                            }
-
-                            console.log(usedVouchers)
-
-                            var excess = 0
-                            if (newCoffee < discountedCoffees) {
-                                excess = discountedCoffees - newCoffee
-                                newCoffee = 0
-                                console.log("Used " + excess + " excess coffee vouchers")
-                            } else if (newCoffee > discountedCoffees) {
-                                newCoffee = newCoffee - discountedCoffees
-                                console.log("Discounted " + discountedCoffees + " coffees, paid for " + newCoffee)
-                            } else {
-                                newCoffee = 0
-                                console.log("All coffees were discounted!")
-                            }
-
-
-                            for (var i = 0; i < (discountedCoffees - excess); i++) {
-                                db.query('UPDATE vouchers SET used = true WHERE vouchid = $1;', [appliedCoffeeVouchers[i]], (err3, rep3) => {
-                                    if (err3) {
-                                        console.log(err3)
-                                        return next(err3)
-                                    } else {
-
-                                    }
-                                })
-                            }
-
-                            if ((discountedCoffees - excess) > 0) {
-                                terminalVouchers += "Applied " + (discountedCoffees - excess) + " Free Coffee Vouchers@"
-                            }
-
-
-                            if (discountPercent > 0) {
-                                terminalVouchers += "Applied 5% Discount Voucher@"
-                                if (discountPercent > 1)
-                                    console.log("More than one 5% discount used, ignoring excess")
-                                db.query('UPDATE vouchers SET used = true WHERE vouchid = $1;', [appliedPercentVouchers[0]], (err3, rep3) => {
-                                    if (err3) {
-                                        console.log(err3)
-                                        return next(err3)
-                                    } else {
-
-                                    }
-                                })
-                            }
-
-                            var newTempSpending = rep2.rows[0].tempspendings + req.body.Total
-                            var newTempCoffee = rep2.rows[0].tempcoffeecount + newCoffee
-
-                            if (newTempSpending >= 100) {
-                                var reward = parseInt(newTempSpending / 100, 10)
-                                terminalEarned += "You earned " + reward + " 5% Discount Vouchers!@"
-                                console.log("User earned " + reward + " 5% Discount Vouchers!")
-                                newTempSpending = newTempSpending - (reward * 100)
-
-                                db.query("Select * FROM defaultvouchers WHERE type = false;", (err, rep) => {
-                                    if (err) {
-                                        console.log(err)
-                                        return next(err)
-                                    } else {
-
-                                        for (var i = 0; i < reward; i++) {
-                                            var vouchUUID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                                                var r = Math.random() * 16 | 0,
-                                                    v = c == 'x' ? r : (r & 0x3 | 0x8);
-                                                return v.toString(16);
-                                            });
-                                            db.query("INSERT INTO vouchers (vouchid, userid, title, details, image, type, used) VALUES ( $1, $2, $3, $4, $5, $6, $7);", [vouchUUID, req.body.userid, rep.rows[0].title, rep.rows[0].details, rep.rows[0].image, rep.rows[0].type, false], (err, rep) => {
-                                                if (err) {
-                                                    console.log(err)
-                                                    return next(err)
-                                                } else {
-
-                                                }
-                                            })
-                                        }
-                                    }
-                                })
-                            }
-                            if (newTempCoffee >= 3) {
-                                var reward = parseInt(newTempCoffee / 3, 10)
-                                terminalEarned += "You earned " + reward + " free coffee Discount Vouchers!@"
-                                console.log("User earned " + reward + " free coffee Discount Vouchers!")
-                                newTempCoffee = newTempCoffee - (reward * 3)
-
-                                db.query("Select * FROM defaultvouchers WHERE type = true;", (err, rep) => {
-                                    if (err) {
-                                        console.log(err)
-                                        return next(err)
-                                    } else {
-
-                                        for (var i = 0; i < reward; i++) {
-                                            var vouchUUID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                                                var r = Math.random() * 16 | 0,
-                                                    v = c == 'x' ? r : (r & 0x3 | 0x8);
-                                                return v.toString(16);
-                                            });
-                                            db.query("INSERT INTO vouchers (vouchid, userid, title, details, image, type, used) VALUES ( $1, $2, $3, $4, $5, $6, $7);", [vouchUUID, req.body.userid, rep.rows[0].title, rep.rows[0].details, rep.rows[0].image, rep.rows[0].type, false], (err, rep) => {
-                                                if (err) {
-                                                    console.log(err)
-                                                    return next(err)
-                                                } else {
-
-                                                }
-                                            })
-                                        }
-                                    }
-                                })
-                            }
-
-
-                            var newTotalSpending = totalSpending + req.body.Total
-                            var newTotalCoffee = totalCoffee + newCoffee
-
-                            terminalPrice += "Total Price: " + req.body.Total + "€"
-
-                            console.log("\nUser " + req.body.userid + ":\nTotal Coffee: " + totalCoffee + " -> " + newTotalCoffee + "\nTotal Spending: " + totalSpending + " -> " + newTotalSpending + "\n")
-
-                            db.query('UPDATE users SET coffeecount = $1, totalspendings = $2, tempcoffeecount = $3, tempspendings = $4 WHERE userid = $5;', [newTotalCoffee, newTotalSpending, newTempCoffee, newTempSpending, req.body.userid], (err3, rep3) => {
+                            db.query('SELECT vouchid, used, type FROM vouchers WHERE userid = $1;', [req.body.userid], (err3, rep3) => {
                                 if (err3) {
                                     console.log(err3)
                                     return next(err3)
                                 } else {
-                                    //TODO Vouchers must be the ones used and total must reflect that 
-                                    res.send(JSON.parse('{"Order":"Success","Orderid":' + rep.rows[0].orderid + ',"Vouchers":' + req.body.Vouchers + ',"Total":' + req.body.Total + ',"terminalProducts":"' + terminalProducts.toString() + '","terminalVouchers":"' + terminalVouchers.toString() + '","terminalPrice":"' + terminalPrice.toString() + '","terminalEarned":"' + terminalEarned.toString() + '"}'))
+                                    console.log(rep3.rows)
+                                    rep3.rows.forEach(element => {
 
+                                        vouchers.forEach(untestedVoucher => {
+                                            if((untestedVoucher == element.vouchid) && element.used == false){
+                                                if(element.type == true){
+                                                    discountedCoffees++
+                                                    usableCoffeeVouchers.push(element.vouchid)
+                                                }
+                                                if(element.type == false){
+                                                    discountPercent++
+                                                    usableDiscountVouchers.push(element.vouchid)
+                                                }
+                                            } else if((untestedVoucher == element.vouchid) && element.used == true){
+
+                                            }
+                                        });
+                                    });
+                                                                      
+
+                                    var excess = 0
+                                    if (newCoffee < discountedCoffees) {
+                                        excess = discountedCoffees - newCoffee
+                                        newCoffee = 0
+                                        console.log("Used " + excess + " excess coffee vouchers")
+                                    } else if (newCoffee > discountedCoffees) {
+                                        newCoffee = newCoffee - discountedCoffees
+                                        console.log("Discounted " + discountedCoffees + " coffees, paid for " + newCoffee)
+                                    } else {
+                                        newCoffee = 0
+                                        console.log("All coffees were discounted!")
+                                    }
+
+
+                                    for (var i = 0; i < (discountedCoffees - excess); i++) {
+                                        db.query('UPDATE vouchers SET used = true WHERE vouchid = $1;', [usableCoffeeVouchers[i]], (err3, rep3) => {
+                                            if (err3) {
+                                                console.log(err3)
+                                                return next(err3)
+                                            } else {
+                                            }
+                                        })
+                                        totalCalculated -= 0.50
+                                    }
+
+                                    if ((discountedCoffees - excess) > 0) {
+                                        terminalVouchers += "Applied " + (discountedCoffees - excess) + " Free Coffee Vouchers@"
+                                    }
+
+
+                                    if (discountPercent > 0) {
+                                        terminalVouchers += "Applied 5% Discount Voucher@"
+                                        if (discountPercent > 1)
+                                            console.log("More than one 5% discount used, ignoring excess")
+                                        db.query('UPDATE vouchers SET used = true WHERE vouchid = $1;', [usableDiscountVouchers[0]], (err3, rep3) => {
+                                            if (err3) {
+                                                console.log(err3)
+                                                return next(err3)
+                                            } else {
+                                            }
+                                        })
+                                        totalCalculated *= 0.95
+                                    }
+
+                                    var newTempSpending = rep2.rows[0].tempspendings + req.body.Total
+                                    var newTempCoffee = rep2.rows[0].tempcoffeecount + newCoffee
+
+                                    if (newTempSpending >= 100) {
+                                        var reward = parseInt(newTempSpending / 100, 10)
+                                        terminalEarned += "You earned " + reward + " 5% Discount Vouchers!@"
+                                        console.log("User earned " + reward + " 5% Discount Vouchers!")
+                                        newTempSpending = newTempSpending - (reward * 100)
+
+                                        db.query("Select * FROM defaultvouchers WHERE type = false;", (err, rep) => {
+                                            if (err) {
+                                                console.log(err)
+                                                return next(err)
+                                            } else {
+
+                                                for (var i = 0; i < reward; i++) {
+                                                    var vouchUUID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                                                        var r = Math.random() * 16 | 0,
+                                                            v = c == 'x' ? r : (r & 0x3 | 0x8);
+                                                        return v.toString(16);
+                                                    });
+                                                    db.query("INSERT INTO vouchers (vouchid, userid, title, details, image, type, used) VALUES ( $1, $2, $3, $4, $5, $6, $7);", [vouchUUID, req.body.userid, rep.rows[0].title, rep.rows[0].details, rep.rows[0].image, rep.rows[0].type, false], (err, rep) => {
+                                                        if (err) {
+                                                            console.log(err)
+                                                            return next(err)
+                                                        } else {
+
+                                                        }
+                                                    })
+                                                }
+                                            }
+                                        })
+                                    }
+                                    if (newTempCoffee >= 3) {
+                                        var reward = parseInt(newTempCoffee / 3, 10)
+                                        terminalEarned += "You earned " + reward + " free coffee Discount Vouchers!@"
+                                        console.log("User earned " + reward + " free coffee Discount Vouchers!")
+                                        newTempCoffee = newTempCoffee - (reward * 3)
+
+                                        db.query("Select * FROM defaultvouchers WHERE type = true;", (err, rep) => {
+                                            if (err) {
+                                                console.log(err)
+                                                return next(err)
+                                            } else {
+
+                                                for (var i = 0; i < reward; i++) {
+                                                    var vouchUUID = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                                                        var r = Math.random() * 16 | 0,
+                                                            v = c == 'x' ? r : (r & 0x3 | 0x8);
+                                                        return v.toString(16);
+                                                    });
+                                                    db.query("INSERT INTO vouchers (vouchid, userid, title, details, image, type, used) VALUES ( $1, $2, $3, $4, $5, $6, $7);", [vouchUUID, req.body.userid, rep.rows[0].title, rep.rows[0].details, rep.rows[0].image, rep.rows[0].type, false], (err, rep) => {
+                                                        if (err) {
+                                                            console.log(err)
+                                                            return next(err)
+                                                        } else {
+
+                                                        }
+                                                    })
+                                                }
+                                            }
+                                        })
+                                    }
+
+
+                                    var newTotalSpending = totalSpending + totalCalculated
+                                    var newTotalCoffee = totalCoffee + newCoffee
+
+                                    terminalPrice += "Total Price: " + totalCalculated + "€"
+
+                                    console.log("\nUser " + req.body.userid + ":\nTotal Coffee: " + totalCoffee + " -> " + newTotalCoffee + "\nTotal Spending: " + totalSpending + " -> " + newTotalSpending + "\n")
+
+                                    db.query('UPDATE users SET coffeecount = $1, totalspendings = $2, tempcoffeecount = $3, tempspendings = $4 WHERE userid = $5;', [newTotalCoffee, newTotalSpending, newTempCoffee, newTempSpending, req.body.userid], (err3, rep3) => {
+                                        if (err3) {
+                                            console.log(err3)
+                                            return next(err3)
+                                        } else {
+                                            //TODO Vouchers must be the ones used and total must reflect that 
+
+                                            db.query('UPDATE orders SET total = $1 WHERE orderid = $2;', [totalCalculated, rep.rows[0].orderid], (err4, rep4) => {
+                                                if (err4) {
+                                                    console.log(err4)
+                                                    return next(err4)
+                                                } else {
+                                                    //TODO Vouchers must be the ones used and total must reflect that 
+                                                    res.send(JSON.parse('{"Order":"Success","Orderid":' + rep.rows[0].orderid + ',"Vouchers":' + req.body.Vouchers + ',"Total":' + totalCalculated + ',"terminalProducts":"' + terminalProducts.toString() + '","terminalVouchers":"' + terminalVouchers.toString() + '","terminalPrice":"' + terminalPrice.toString() + '","terminalEarned":"' + terminalEarned.toString() + '"}'))
+        
+                                                }
+                                            })
+
+                                        }
+                                    })
                                 }
                             })
                         }

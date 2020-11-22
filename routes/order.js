@@ -48,8 +48,8 @@ router.post('/', function(req, res, next) {
                                         console.log("Asked for " + prods[prod] + " coffees!")
                                         newCoffee = prods[prod]
                                     }
-                                    terminalProducts += (prodData.rows[prod].title + " x " + prods[prod].toString() + "@")
-                                        //console.log(prod + " -> " + prods[prod]);
+                                    terminalProducts += (prodData.rows[prod-1].title + " x " + prods[prod].toString() + "@")
+                                    //console.log(prod + " -> " + prods[prod]);
 
                                 }
                             }
@@ -76,7 +76,6 @@ router.post('/', function(req, res, next) {
                                     console.log(err3)
                                     return next(err3)
                                 } else {
-                                    console.log(rep3.rows)
                                     rep3.rows.forEach(element => {
 
                                         vouchers.forEach(untestedVoucher => {
@@ -217,8 +216,6 @@ router.post('/', function(req, res, next) {
                                             console.log(err3)
                                             return next(err3)
                                         } else {
-                                            //TODO Vouchers must be the ones used and total must reflect that 
-
                                             db.query('UPDATE orders SET total = $1 WHERE orderid = $2;', [totalCalculated, rep.rows[0].orderid], (err4, rep4) => {
                                                 if (err4) {
                                                     console.log(err4)

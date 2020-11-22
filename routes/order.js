@@ -10,7 +10,7 @@ router.post('/', function(req, res, next) {
     var terminalPrice = ""
     var terminalEarned = ""
 
-    db.query("INSERT INTO orders (userid, products, vouchers, date, total) VALUES ( $1, $2, $3, $4, $5);", [req.body.userid, req.body.Products, req.body.Vouchers, date, req.body.Total], (err, rep) => {
+    db.query("INSERT INTO orders (userid, products, vouchers, date, total) VALUES ( $1, $2, $3, $4, $5) RETURNING orderid;", [req.body.userid, req.body.Products, req.body.Vouchers, date, req.body.Total], (err, rep) => {
         if (err) {
             console.log(err)
             return next(err)
@@ -178,7 +178,7 @@ router.post('/', function(req, res, next) {
                                     return next(err3)
                                 } else {
                                     //TODO Vouchers must be the ones used and total must reflect that 
-                                    res.send(JSON.parse('{"Order":"Success","Vouchers":'+ req.body.Vouchers +',"Total":'+ req.body.Total +',"terminalProducts":"'+terminalProducts.toString()+'","terminalVouchers":"'+terminalVouchers.toString()+'","terminalPrice":"'+terminalPrice.toString()+'","terminalEarned":"'+terminalEarned.toString()+'"}'))
+                                    res.send(JSON.parse('{"Order":"Success","Orderid":'+ req.rows[0] +',"Vouchers":'+ req.body.Vouchers +',"Total":'+ req.body.Total +',"terminalProducts":"'+terminalProducts.toString()+'","terminalVouchers":"'+terminalVouchers.toString()+'","terminalPrice":"'+terminalPrice.toString()+'","terminalEarned":"'+terminalEarned.toString()+'"}'))
         
                                 }
                             })

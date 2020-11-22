@@ -18,6 +18,22 @@ router.get('/:id', function(req, res, next) {
     })
 })
 
+router.post('/pastorders', function (req, res, next) {
+    db.query('SELECT orderid, products, vouchers, date, total FROM orders WHERE userid = $1;', [req.body.userid], (err4, rep4) => {
+        if (err4) {
+            return next(err4)
+        } else if (rep4 != null) {
+            var r = {}
+            var key = 'Pastorders'
+            r[key] = []
+            rep4.rows.forEach(element => {
+                r[key].push(element)
+            });
+            res.send(r)
+        }
+    })
+})
+
 router.post('/', function(req, res, next) {
 
     db.query('SELECT username from users WHERE username=$1;', [req.body.username], (err, rep) => {

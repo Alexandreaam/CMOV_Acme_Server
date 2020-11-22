@@ -4,7 +4,7 @@ var router = express.Router();
 
 /* GET menu listing. */
 router.post('/', function(req, res, next) {
-    db.query('SELECT * from products;', (err, rep) => {
+    db.query('SELECT * FROM products;', (err, rep) => {
         if (err) {
             return next(err)
         } else if (rep != null) {
@@ -14,7 +14,7 @@ router.post('/', function(req, res, next) {
             rep.rows.forEach(element => {
                 r[key].push(element)
             });
-            db.query('SELECT * from vouchers where userid = $1 AND used = false;', [req.body.userid], (err2, rep2) => {
+            db.query('SELECT * FROM vouchers WHERE userid = $1 AND used = false;', [req.body.userid], (err2, rep2) => {
                 if (err2) {
                     return next(err2)
                 } else if (rep2 != null) {
@@ -23,7 +23,29 @@ router.post('/', function(req, res, next) {
                     rep2.rows.forEach(element => {
                         r[key].push(element)
                     });
-                    res.send(r)
+                    db.query('SELECT coffeecount, totalspendings, tempcoffeecount, tempspendings FROM users WHERE userid = $1;', [req.body.userid], (err3, rep3) => {
+                        if (err3) {
+                            return next(err3)
+                        } else if (rep3 != null) {
+                            var key = 'Userdata'
+                            r[key] = []
+                            rep3.rows.forEach(element => {
+                                r[key].push(element)
+                            });
+                            db.query('SELECT orderid, products, vouchers, date, total FROM orders WHERE userid = $1;', [req.body.userid], (err4, rep4) => {
+                                if (err4) {
+                                    return next(err4)
+                                } else if (rep4 != null) {
+                                    var key = 'Pastorders'
+                                    r[key] = []
+                                    rep4.rows.forEach(element => {
+                                        r[key].push(element)
+                                    });
+                                    res.send(r)
+                                }
+                            })
+                        }
+                    })
                 }
             })
         } else {

@@ -218,7 +218,7 @@ router.post('/', function(req, res, next) {
                                             console.log(err3)
                                             return next(err3)
                                         } else {
-                                            db.query('UPDATE orders SET total = $1 WHERE orderid = $2;', [totalCalculated, rep.rows[0].orderid], (err4, rep4) => {
+                                            db.query('UPDATE orders SET total = $1, vouchers = $2 WHERE orderid = $3;', [totalCalculated, JSON.stringify(usedVouchers), rep.rows[0].orderid], (err4, rep4) => {
                                                 if (err4) {
                                                     console.log(err4)
                                                     return next(err4)

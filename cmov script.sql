@@ -1,11 +1,13 @@
+CREATE EXTENSION pgcrypto;
+
 create table users
 (
     userid          uuid not null PRIMARY KEY,
-    username        varchar(255),
-    password        varchar(255),
+    username        varchar(255) NOT NULL UNIQUE,
+    password        varchar(255) NOT NULL,
     fullname        varchar(255),
-    creditcard      integer,
-    nif             integer,
+    creditcard      varchar(255),
+    nif             varchar(255),
     coffeecount     integer DEFAULT 0,
     totalspendings  double precision DEFAULT 0.0,
     tempcoffeecount integer DEFAULT 0,
@@ -19,7 +21,7 @@ create unique index table_name_username_uindex
     on users (username);
 
 INSERT INTO users (userid, username, password, fullname, creditcard, nif, coffeecount, totalspendings)
-VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', 'admin', 'admin' , 'admin', '123', '123', '0', '0');
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', 'admin', crypt('admin', gen_salt('bf')) , 'admin', '123', '123', '0', '0');
 
 UPDATE users
 SET coffeecount = 0, totalspendings = 2.7, tempcoffeecount = 0, tempspendings = 2.7
@@ -60,6 +62,21 @@ create table certificates
     userid      uuid REFERENCES users(userid),
     certificate varchar(500)
 );
+
+INSERT INTO orders (userid, products, vouchers, date, total)
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{"9bcc7836-3d47-4c05-8a83-cf4f79015deb":true, "43e4a887-9399-42be-9198-3154be564f14":false}', '2019-11-12', '2.7');
+
+INSERT INTO orders (userid, products, vouchers, date, total)
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{"9bcc7836-3d47-4c05-8a83-cf4f79015deb":true, "43e4a887-9399-42be-9198-3154be564f14":false}', '2019-11-12', '2.7');
+
+INSERT INTO orders (userid, products, vouchers, date, total)
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{"9bcc7836-3d47-4c05-8a83-cf4f79015deb":true, "43e4a887-9399-42be-9198-3154be564f14":false}', '2019-11-12', '2.7');
+
+INSERT INTO orders (userid, products, vouchers, date, total)
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{"9bcc7836-3d47-4c05-8a83-cf4f79015deb":true, "43e4a887-9399-42be-9198-3154be564f14":false}', '2019-11-12', '2.7');
+
+INSERT INTO orders (userid, products, vouchers, date, total)
+VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{"9bcc7836-3d47-4c05-8a83-cf4f79015deb":true, "43e4a887-9399-42be-9198-3154be564f14":false}', '2019-11-12', '2.7');
 
 INSERT INTO orders (userid, products, vouchers, date, total)
 VALUES ('82338de6-ba66-43d0-81f0-5205529b8c23', '{"1":1,"2":3,"3":2}', '{"9bcc7836-3d47-4c05-8a83-cf4f79015deb":true, "43e4a887-9399-42be-9198-3154be564f14":false}', '2019-11-12', '2.7');

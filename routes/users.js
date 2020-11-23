@@ -49,7 +49,7 @@ router.post('/', function(req, res, next) {
                 return v.toString(16);
             });
 
-            db.query('INSERT INTO users (userid, username, password, fullname, creditcard, nif) VALUES ( $1, $2, $3, $4, $5, $6);', [userUUID, req.body.username, req.body.password, req.body.fullname, req.body.creditcard, req.body.nif], (err2, rep) => {
+            db.query("INSERT INTO users (userid, username, password, fullname, creditcard, nif) VALUES ( $1, $2, crypt($3, gen_salt('bf')), $4, $5, $6);", [userUUID, req.body.username, req.body.password, req.body.fullname, req.body.creditcard, req.body.nif], (err2, rep) => {
                 if (err2) {
                     console.log(err2.message)
                     return next(err2)
@@ -74,15 +74,19 @@ router.post('/', function(req, res, next) {
 
 router.post('/login', function(req, res, next) {
 
-    db.query('SELECT userid, password from users WHERE username=$1;', [req.body.username], (err, rep) => {
+    db.query('SELECT userid FROM users WHERE username=$1;', [req.body.username], (err, rep) => {
         if (err) {
             return next(err)
         } else if (rep.rows[0] != undefined) {
-            if (req.body.password == rep.rows[0].password) {
-                res.send(JSON.parse('{"result":"Confirmed","userid":"' + rep.rows[0].userid + '"}'))
-            } else if (req.body.password != rep.rows[0].password) {
-                res.send(JSON.parse('{"result":"Wrong"}'))
-            }
+            db.query('SELECT userid from users WHERE username=$1 AND password = crypt($2, password);', [req.body.username, req.body.password], (err2, rep2) => {
+                if (err2) {
+                    return next(err2)
+                } else if (rep2.rows[0] != undefined) {
+                    res.send(JSON.parse('{"result":"Confirmed","userid":"' + rep2.rows[0].userid + '"}'))
+                } else {
+                    res.send(JSON.parse('{"result":"Wrong"}'))
+                }
+            })
         } else {
             res.send(JSON.parse('{"result":"Nonexistent"}'))
         }

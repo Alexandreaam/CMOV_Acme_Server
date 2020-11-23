@@ -59,11 +59,11 @@ router.post('/', function(req, res, next) {
                             var discountPercent = 0
                             var appliedPercentVouchers = []
                             var vouchers = []
+                            var usedVouchers = {}
 
                             var vouchs = JSON.parse(req.body.Vouchers)
                             for (var vouch in vouchs) {
                                 if (vouchs.hasOwnProperty(vouch)) {
-                                    //TODO Check if vouch exists and is of correct type
                                         vouchers.push(vouch)
                                 }
                             }
@@ -118,6 +118,7 @@ router.post('/', function(req, res, next) {
                                             }
                                         })
                                         totalCalculated -= 0.50
+                                        usedVouchers[usableCoffeeVouchers[i]] = true
                                     }
 
                                     if ((discountedCoffees - excess) > 0) {
@@ -137,6 +138,7 @@ router.post('/', function(req, res, next) {
                                             }
                                         })
                                         totalCalculated *= 0.95
+                                        usedVouchers[usableDiscountVouchers[i]] = false
                                     }
 
                                     var newTempSpending = rep2.rows[0].tempspendings + req.body.Total
@@ -221,8 +223,7 @@ router.post('/', function(req, res, next) {
                                                     console.log(err4)
                                                     return next(err4)
                                                 } else {
-                                                    //TODO Vouchers must be the ones used and total must reflect that 
-                                                    res.send(JSON.parse('{"Order":"Success","Orderid":' + rep.rows[0].orderid + ',"Vouchers":' + req.body.Vouchers + ',"Total":' + totalCalculated + ',"terminalProducts":"' + terminalProducts.toString() + '","terminalVouchers":"' + terminalVouchers.toString() + '","terminalPrice":"' + terminalPrice.toString() + '","terminalEarned":"' + terminalEarned.toString() + '"}'))
+                                                    res.send(JSON.parse('{"Order":"Success","Orderid":' + rep.rows[0].orderid + ',"Vouchers":' + JSON.stringify(usedVouchers) + ',"Total":' + totalCalculated + ',"terminalProducts":"' + terminalProducts.toString() + '","terminalVouchers":"' + terminalVouchers.toString() + '","terminalPrice":"' + terminalPrice.toString() + '","terminalEarned":"' + terminalEarned.toString() + '"}'))
         
                                                 }
                                             })
